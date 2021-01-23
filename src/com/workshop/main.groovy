@@ -11,6 +11,8 @@ def main(script) {
 	// Object initialization
 	c = new Config()
 
+	sprebuild = new prebuild()
+
 	// Pipeline specific variable get from injected env
 	// Mandatory variable will be check at details & validation steps
 	def repository_name = ("${script.env.repository_name}" != "null") ? "${script.env.repository_name}" : ""
@@ -19,6 +21,8 @@ def main(script) {
 	def docker_user = ("${script.env.docker_user}" != "null") ? "${script.env.docker_user}" : ""
 	def app_port = ("${script.env.app_port}" != "null") ? "${script.env.app_port}" : ""
 	def pr_num = ("${script.env.pr_num}" != "null") ? "${script.env.pr_num}" : ""
+	// Initialize docker tools
+	def dockerTool = tool name: 'docker', type: 'dockerTool'
 
 	// Pipeline object
 	p = new Pipeline(
@@ -27,12 +31,20 @@ def main(script) {
 		git_user,
 		docker_user,
 		app_port,
-		pr_num
+		pr_num,
+		dockerTool
    )
 
 
     ansiColor('xterm') {
-		// PASS
+		stage('Pre Build - Details') {
+			sprebuild.validation(p)
+			sprebuild.details(p)
+		}
+
+		stage('Pre Build - Checkout & Test') {
+			sprebuild.checkoutBuildTest(p)
+		}
     }
 }
 return this
